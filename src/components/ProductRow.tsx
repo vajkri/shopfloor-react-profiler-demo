@@ -1,7 +1,6 @@
 import { memo } from "react";
 import type { Product } from "../data/products";
 import { expensiveFormat, ratingStars } from "../lib/expensiveFormat";
-import { useTheme } from "../theme/ThemeContext";
 
 interface ProductRowProps {
   product: Product;
@@ -16,11 +15,11 @@ interface ProductRowProps {
 // is greyed out / skipped. That's the "measure, don't guess — here's the proof"
 // payoff.
 //
-// 🐞 ISSUE #5 (broad context) still lands here: this row calls useTheme() purely
-// to colour the heart, so flipping the theme re-renders every row. (Fixed later.)
+// ✅ FIX #5 (narrow the context): the row no longer calls useTheme(). The heart
+// colour comes from a CSS variable (var(--accent), set per-theme in styles.css),
+// so flipping the theme no longer re-renders a single row — CSS handles it for
+// free. Context should carry app state, not styling that CSS already cascades.
 function ProductRowImpl({ product, isWishlisted, onToggle }: ProductRowProps) {
-  const { accent } = useTheme();
-
   return (
     <tr>
       <td className="cell-sku">{product.sku}</td>
@@ -33,10 +32,9 @@ function ProductRowImpl({ product, isWishlisted, onToggle }: ProductRowProps) {
       </td>
       <td>
         <button
-          className="wishlist-btn"
+          className={"wishlist-btn" + (isWishlisted ? " wishlist-btn--on" : "")}
           aria-pressed={isWishlisted}
           aria-label={isWishlisted ? "Remove from wishlist" : "Add to wishlist"}
-          style={{ color: isWishlisted ? accent : "var(--muted)" }}
           onClick={() => onToggle(product.id)}
         >
           {isWishlisted ? "♥" : "♡"}

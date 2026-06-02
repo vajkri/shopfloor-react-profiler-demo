@@ -239,6 +239,13 @@ body {
   width: 24px;
   text-align: left;
   padding: 2px 0;
+  color: var(--muted);
+}
+
+/* Active heart uses the theme accent — handled purely by CSS, so toggling the
+   theme re-colours every heart without re-rendering a single React component. */
+.wishlist-btn--on {
+  color: var(--accent);
 }
 
 .wishlist-btn:focus-visible {

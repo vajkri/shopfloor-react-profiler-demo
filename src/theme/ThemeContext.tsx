@@ -1,6 +1,8 @@
 import {
   createContext,
+  useCallback,
   useContext,
+  useMemo,
   useState,
   type ReactNode,
 } from "react";
@@ -19,21 +21,25 @@ const ThemeContext = createContext<ThemeContextValue | null>(null);
 export function ThemeProvider({ children }: { children: ReactNode }) {
   const [theme, setTheme] = useState<Theme>("light");
 
-  const toggleTheme = () =>
-    setTheme((t) => (t === "light" ? "dark" : "light"));
+  // ✅ FIX #5 (hygiene): a stable toggler + a memoized value object so the
+  // provider doesn't hand out a fresh identity on unrelated re-renders. The
+  // bigger win, though, was upstream: rows no longer consume this context for
+  // styling (see ProductRow / styles.css), so a theme flip re-renders nothing
+  // in the catalog.
+  const toggleTheme = useCallback(
+    () => setTheme((t) => (t === "light" ? "dark" : "light")),
+    [],
+  );
 
   const accent = theme === "light" ? "#7b3fe4" : "#c9a7ff";
 
-  // 🐞 ISSUE #5 (context value churn / too broad):
-  // This object is rebuilt on every render of the provider, so its identity
-  // changes every time. EVERY component that calls useTheme() — including all
-  // ~600 ProductRows — re-renders whenever this value changes. Flip the theme
-  // and watch the Profiler: the entire catalog commits in one go, just to
-  // change an accent colour that CSS could have handled for free.
+  const value = useMemo(
+    () => ({ theme, accent, toggleTheme }),
+    [theme, accent, toggleTheme],
+  );
+
   return (
-    <ThemeContext.Provider value={{ theme, accent, toggleTheme }}>
-      {children}
-    </ThemeContext.Provider>
+    <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>
   );
 }
 
