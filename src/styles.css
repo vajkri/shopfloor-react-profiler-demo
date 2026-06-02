@@ -157,7 +157,13 @@ body {
   color: #fff;
 }
 
-.app[data-theme="dark"] .chip--active {
+/* Keep the active chip's label light on hover (don't fall back to .chip:hover) */
+.chip--active:hover {
+  color: #fff;
+}
+
+.app[data-theme="dark"] .chip--active,
+.app[data-theme="dark"] .chip--active:hover {
   color: #1c1c24;
 }
 
@@ -213,7 +219,7 @@ body {
 }
 
 .cell-num {
-  text-align: right;
+  text-align: left;
   font-variant-numeric: tabular-nums;
 }
 
@@ -228,7 +234,11 @@ body {
   cursor: pointer;
   font-size: 18px;
   line-height: 1;
-  padding: 2px 6px;
+  /* Fixed box + left align so the filled ♥ and outline ♡ (different glyph
+     widths) sit in the same spot — no more ragged column. */
+  width: 24px;
+  text-align: left;
+  padding: 2px 0;
 }
 
 .wishlist-btn:focus-visible {
