@@ -1,3 +1,4 @@
+import { memo } from "react";
 import type { Product } from "../data/products";
 import { expensiveFormat, ratingStars } from "../lib/expensiveFormat";
 import { useTheme } from "../theme/ThemeContext";
@@ -8,21 +9,18 @@ interface ProductRowProps {
   onToggle: () => void;
 }
 
-// 🐞 ISSUE #2 (missing React.memo):
-// This component is a plain function, so it re-renders every single time its
-// parent (<ProductTable>) renders — even when this row's own data hasn't
-// changed. Toggle ONE wishlist heart and the Profiler's ranked chart shows all
-// ~600 rows re-rendering. Each does a little expensiveFormat() work, so the
-// wasted time is real and visible.
+// ✅ FIX #2 (React.memo): wrapping the row in memo lets React SKIP re-rendering
+// it when its props are unchanged. Toggling one heart should now re-render only
+// the row that changed.
 //
-// 🐞 ISSUE #3 (unstable prop) is the *sequel*: wrap this in React.memo and the
-// rows STILL re-render, because <ProductTable> hands every row a brand-new
-// `onToggle` arrow function on each render. The Profiler's "Why did this
-// render?" panel will say: props changed → onToggle.
+// 🐞 ISSUE #3 (unstable prop) still bites though: <ProductTable> hands every row
+// a brand-new `onToggle` arrow on each render, so memo's prop comparison fails
+// and the rows re-render anyway. "Why did this render?" → props changed:
+// onToggle. (Fixed in the next commit.)
 //
-// 🐞 ISSUE #5 (broad context) also lands here: this row calls useTheme() purely
-// to colour the heart, so flipping the theme re-renders the entire catalog.
-export function ProductRow({ product, isWishlisted, onToggle }: ProductRowProps) {
+// 🐞 ISSUE #5 (broad context) also still lands here: this row calls useTheme()
+// purely to colour the heart, so flipping the theme re-renders every row.
+function ProductRowImpl({ product, isWishlisted, onToggle }: ProductRowProps) {
   const { accent } = useTheme();
 
   return (
@@ -49,3 +47,5 @@ export function ProductRow({ product, isWishlisted, onToggle }: ProductRowProps)
     </tr>
   );
 }
+
+export const ProductRow = memo(ProductRowImpl);
