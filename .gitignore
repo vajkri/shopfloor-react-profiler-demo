@@ -5,3 +5,6 @@ dist-ssr
 .DS_Store
 .vite
 *.tsbuildinfo
+
+# Marp build output (slides are served live via `npm run slides`)
+slides/index.html
