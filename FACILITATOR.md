@@ -7,13 +7,16 @@ Everything below is the stuff participants **don't** get. Each fix also lives as
 - **Audience:** mixed front-end. Issues are ordered easy → hard; let people self-pace.
 - **Format:** everyone forks the CodeSandbox (or clones `main`). They profile, diagnose, fix. Reconvene per issue and reveal.
 - **The recurring lesson:** *measure → diagnose → fix → measure again.* Push people to re-record after every fix and **watch components go grey**. That "it's skipped now" moment (issue #3) is the payoff.
+- **⚠️ Have everyone do TWO things first, or the app won't feel broken:**
+  1. **CPU throttle 6×** — DevTools → **Performance** → ⚙️ → *CPU: 6× slowdown*. On a fast machine the wasted renders are only ~150 ms blocks (a heart click / theme flip) and ~14–90 ms keystrokes — real, but below the "ugh, slow" threshold. 6× pushes them to ~0.5–1 s and the lag becomes obvious. **This is the intended way to run it** (rather than cranking the synthetic-cost constants).
+  2. **Highlight updates** — React DevTools → **Components** → ⚙️ → *Highlight updates when components render*. Crucial because **React re-rendering identical rows causes no visible repaint** — without this, "the whole table flashes" is invisible. With it on, a single ♥ click lights up all 600 rows.
 - **Profiler settings to switch on first** (gear icon in the Profiler tab):
   - ✅ *Record why each component rendered while profiling*
   - Optionally *Hide components where renders took less than 1 ms* to cut noise.
 
 ### Two deliberate setup choices
 - **StrictMode is OFF** (`src/main.tsx`). It double-invokes renders in dev, which doubles commits and confuses the "why did this render?" story for newcomers. Re-enabling it afterwards — and explaining *why* React double-renders — is a great closing discussion.
-- **`expensiveFormat()` / `computeStats()` carry deterministic busy-work** (`src/lib/expensiveFormat.ts`, `src/components/SummaryPanel.tsx`). It stands in for real per-render cost (currency formatting, report roll-ups) so wasted renders register as real milliseconds. If the jank is too mild/severe on the room's hardware, tune the `WORK` / loop constants.
+- **`expensiveFormat()` / `computeStats()` carry deterministic busy-work** (`src/lib/expensiveFormat.ts`, `src/components/SummaryPanel.tsx`). It stands in for real per-render cost (currency formatting, report roll-ups) so wasted renders register as real milliseconds. The intended way to make the jank *felt* is the **6× CPU throttle** above, not tuning these — but if you want it heavier/lighter regardless of throttle, raise/lower the `WORK` constant and the `SummaryPanel` warmup loop.
 
 ---
 
@@ -26,7 +29,7 @@ Everything below is the stuff participants **don't** get. Each fix also lives as
 - **Fix:** colocate the search/filter state. Extract a `<Catalog>` component that owns `searchTerm`, `selectedCategory`, the `SearchBar`, and the `ProductTable`. `App` then renders `<SummaryPanel/>` and `<Catalog/>` as siblings — typing no longer re-renders the summary.
 - **Prove it:** record a keystroke → `SummaryPanel` no longer appears in the commit.
 
-### 🟢 Issue 2 — Missing `React.memo` (one ♥ flashes the whole table)
+### 🟢 Issue 2 — Missing `React.memo` (one ♥ re-renders the whole table)
 - **Where:** `src/components/ProductRow.tsx`.
 - **Profiler signal:** toggling one heart → all ~600 rows re-render (ranked chart full of rows, each a slice of ms).
 - **Root cause:** `ProductRow` is a plain function, so it re-renders whenever `<ProductTable>` does.

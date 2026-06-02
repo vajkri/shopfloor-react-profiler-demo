@@ -28,6 +28,28 @@ Then open the printed `http://localhost:5190` URL.
 
 ---
 
+## First: make the slowness visible ⚙️
+
+On a modern laptop this app barely stutters, and React re-rendering rows with
+**identical output doesn't visually "flash"** — so the wasted work is invisible
+to the naked eye. **Flip these two switches before you start** or you'll wonder
+what all the fuss is about:
+
+1. **Throttle your CPU 6×.** DevTools → **Performance** tab → the ⚙️ (settings) →
+   **CPU: 6× slowdown**. Keep DevTools open and it stays applied. Now typing in
+   search lags, clicking a heart stutters, the theme flip hitches — the bugs are
+   *felt*, not just measured.
+2. **Highlight what re-renders.** React DevTools → **Components** tab → ⚙️ →
+   tick **"Highlight updates when components render."** Every component that
+   re-renders now flashes a colored outline. Click **one** wishlist ♥ and watch
+   the **whole table light up** — those are ~600 wasted renders you couldn't see
+   a second ago.
+
+> The Profiler measures the waste with or without these. They just make it
+> *obvious* — which is the whole point.
+
+---
+
 ## How to use the Profiler (60-second primer)
 
 1. Open browser DevTools (`F12`) → **Profiler** tab.
@@ -50,11 +72,11 @@ Profile each interaction below. The hint tells you *what to look for*, not the a
 
 | # | Try this | It feels… | Hint: what is the Profiler telling you? |
 |---|----------|-----------|------------------------------------------|
-| 1 | Type in the **search box** | laggy per keystroke | Which components re-render on a keystroke that have *nothing to do* with search? |
-| 2 | Click **one** wishlist ♥ | the whole table flashes | How many rows re-render when only one changed? |
+| 1 | Type in the **search box** | laggy per keystroke (with throttle on) | Which components re-render on a keystroke that have *nothing to do* with search? |
+| 2 | Click **one** wishlist ♥ | the whole table lights up *(Highlight updates on)* | How many rows re-render when only one changed? |
 | 3 | (After you try to fix #2) click a ♥ again | rows *still* re-render | Open "Why did this render?" on a row. What changed? |
 | 4 | Type in search again, watch one card | sluggish, heavy | Which single component has a long *self* render time, every commit? |
-| 5 | Flip the **theme** (🌙/☀️) | the entire catalog re-renders | How many components light up just to change a colour? Did they *need* to? |
+| 5 | Flip the **theme** (🌙/☀️) | the entire catalog lights up | How many components re-render just to change a colour? Did they *need* to? |
 
 For each: record → diagnose → fix → **record again and confirm the wasted renders are gone** (components go grey / commit times drop). That last step is the real win.
 
