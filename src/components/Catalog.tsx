@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { PRODUCTS } from "../data/products";
 import { SearchBar } from "./SearchBar";
 import { CategoryFilter, type CategoryChoice } from "./CategoryFilter";
@@ -13,14 +13,17 @@ export function Catalog() {
   const [selectedCategory, setSelectedCategory] = useState<CategoryChoice>("All");
   const [wishlist, setWishlist] = useState<Set<number>>(() => new Set());
 
-  const toggleWishlist = (id: number) => {
+  // ✅ FIX #3 (stable callback): useCallback with an empty dep array gives every
+  // render the SAME function identity. The functional `setWishlist` updater is
+  // what lets the deps stay empty (we never read `wishlist` directly here).
+  const toggleWishlist = useCallback((id: number) => {
     setWishlist((prev) => {
       const next = new Set(prev);
       if (next.has(id)) next.delete(id);
       else next.add(id);
       return next;
     });
-  };
+  }, []);
 
   const filtered = PRODUCTS.filter(
     (p) =>

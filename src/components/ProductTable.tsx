@@ -67,10 +67,10 @@ export function ProductTable({
                 key={product.id}
                 product={product}
                 isWishlisted={wishlist.has(product.id)}
-                // 🐞 ISSUE #3 (unstable prop): a fresh arrow function is created
-                // for every row on every render, so even a memoized <ProductRow>
-                // sees `onToggle` as a "changed" prop and re-renders anyway.
-                onToggle={() => onToggleWishlist(product.id)}
+                // ✅ FIX #3: pass the STABLE callback straight through. The row
+                // closes over its own id internally, so the prop identity that
+                // crosses the memo boundary no longer changes every render.
+                onToggle={onToggleWishlist}
               />
             );
           })}

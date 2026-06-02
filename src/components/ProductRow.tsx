@@ -6,20 +6,18 @@ import { useTheme } from "../theme/ThemeContext";
 interface ProductRowProps {
   product: Product;
   isWishlisted: boolean;
-  onToggle: () => void;
+  // ✅ FIX #3: receives the STABLE callback and supplies its own id, so the prop
+  // crossing the memo boundary keeps the same identity across renders.
+  onToggle: (id: number) => void;
 }
 
-// ✅ FIX #2 (React.memo): wrapping the row in memo lets React SKIP re-rendering
-// it when its props are unchanged. Toggling one heart should now re-render only
-// the row that changed.
+// ✅ FIX #2 + #3: memo + a stable onToggle prop now work together. Toggle one
+// heart and the Profiler shows only the clicked row re-render — every other row
+// is greyed out / skipped. That's the "measure, don't guess — here's the proof"
+// payoff.
 //
-// 🐞 ISSUE #3 (unstable prop) still bites though: <ProductTable> hands every row
-// a brand-new `onToggle` arrow on each render, so memo's prop comparison fails
-// and the rows re-render anyway. "Why did this render?" → props changed:
-// onToggle. (Fixed in the next commit.)
-//
-// 🐞 ISSUE #5 (broad context) also still lands here: this row calls useTheme()
-// purely to colour the heart, so flipping the theme re-renders every row.
+// 🐞 ISSUE #5 (broad context) still lands here: this row calls useTheme() purely
+// to colour the heart, so flipping the theme re-renders every row. (Fixed later.)
 function ProductRowImpl({ product, isWishlisted, onToggle }: ProductRowProps) {
   const { accent } = useTheme();
 
@@ -39,7 +37,7 @@ function ProductRowImpl({ product, isWishlisted, onToggle }: ProductRowProps) {
           aria-pressed={isWishlisted}
           aria-label={isWishlisted ? "Remove from wishlist" : "Add to wishlist"}
           style={{ color: isWishlisted ? accent : "var(--muted)" }}
-          onClick={onToggle}
+          onClick={() => onToggle(product.id)}
         >
           {isWishlisted ? "♥" : "♡"}
         </button>
