@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import type { Product } from "../data/products";
 import { expensiveFormat } from "../lib/expensiveFormat";
 
@@ -47,13 +48,11 @@ function computeStats(products: Product[]): Stats {
 }
 
 export function SummaryPanel({ products }: SummaryPanelProps) {
-  // 🐞 ISSUE #4 (expensive compute in render):
-  // computeStats() runs on EVERY render of this component with no useMemo. And
-  // because of ISSUE #1 this panel re-renders on every keystroke in the search
-  // box — even though the summary covers the whole catalog and has nothing to
-  // do with the search term. The Profiler shows <SummaryPanel> with a long
-  // self-render time, dominating each commit.
-  const stats = computeStats(products);
+  // ✅ FIX #4 (useMemo): the heavy aggregate is now memoized on `products`.
+  // Since the full catalog reference is stable, computeStats() runs once instead
+  // of on every render. Even when this component does re-render, its self-render
+  // time collapses to ~0 ms in the Profiler.
+  const stats = useMemo(() => computeStats(products), [products]);
 
   return (
     <section className="summary-panel" aria-label="Catalog summary">
