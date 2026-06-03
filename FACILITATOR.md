@@ -6,7 +6,7 @@ Everything below is the stuff participants **don't** get. Each fix also lives as
 
 - **Audience:** mixed front-end. Issues are ordered easy → hard; let people self-pace.
 - **Format:** everyone forks the CodeSandbox (or clones `main`). They profile, diagnose, fix. Reconvene per issue and reveal.
-- **The recurring lesson:** *measure → diagnose → fix → measure again.* Push people to re-record after every fix and **watch components go grey**. That "it's skipped now" moment (issue #3) is the payoff.
+- **The recurring lesson:** *feel the symptom → measure → diagnose → fix → measure again.* Each issue starts as a **bug report** ("search is laggy"), not a flamegraph. Have people reproduce the *feeling* first (throttle on), then open the Profiler to find out why. Push them to re-record after every fix and **watch components go grey**. That "it's skipped now" moment (issue #3) is the payoff.
 - **⚠️ Have everyone do TWO things first, or the app won't feel broken:**
   1. **CPU throttle 6×** — DevTools → **Performance** → ⚙️ → *CPU: 6× slowdown*. On a fast machine the wasted renders are only ~150 ms blocks (a heart click / theme flip) and ~14–90 ms keystrokes — real, but below the "ugh, slow" threshold. 6× pushes them to ~0.5–1 s and the lag becomes obvious. **This is the intended way to run it** (rather than cranking the synthetic-cost constants).
   2. **Highlight updates** — React DevTools → **Components** → ⚙️ → *Highlight updates when components render*. Crucial because **React re-rendering identical rows causes no visible repaint** — without this, "the whole table flashes" is invisible. With it on, a single ♥ click lights up all 600 rows.
@@ -23,6 +23,7 @@ Everything below is the stuff participants **don't** get. Each fix also lives as
 ## The 5 issues
 
 ### 🟢 Issue 1 — State lifted too high (laggy search)
+- **Feels like:** 🐞 *"Search is laggy."* You type a product name and the letters land a beat after each keypress — the whole top of the page hitches on every keystroke. Typing "shampoo" stutters its way in.
 - **Where:** `src/App.tsx` — `searchTerm` / `selectedCategory` live in `App`.
 - **Profiler signal:** every keystroke commits `<SummaryPanel>` (and the table). `SummaryPanel` has a long self-time (see #4) yet has *nothing* to do with the search term.
 - **Root cause:** the search state sits in the common parent of both the search box **and** the summary, so typing re-renders the summary.
@@ -30,6 +31,7 @@ Everything below is the stuff participants **don't** get. Each fix also lives as
 - **Prove it:** record a keystroke → `SummaryPanel` no longer appears in the commit.
 
 ### 🟢 Issue 2 — Missing `React.memo` (one ♥ re-renders the whole table)
+- **Feels like:** 🐞 *"The catalog feels sluggish when I favourite something."* Clicking a single wishlist ♥ produces a visible hitch across the *whole* table — one heart shouldn't jank 600 rows. Adding a few favourites makes the list feel sticky.
 - **Where:** `src/components/ProductRow.tsx`.
 - **Profiler signal:** toggling one heart → all ~600 rows re-render (ranked chart full of rows, each a slice of ms).
 - **Root cause:** `ProductRow` is a plain function, so it re-renders whenever `<ProductTable>` does.
@@ -37,6 +39,7 @@ Everything below is the stuff participants **don't** get. Each fix also lives as
 - **Catch:** on its own this **won't** fully work yet — see #3. That's intentional and is the lead-in to the best lesson of the day.
 
 ### 🟡 Issue 3 — Unstable prop defeats `memo` (rows *still* re-render)
+- **Feels like:** 😖 *"I fixed it and nothing changed."* You added `React.memo` for issue #2, expecting the heart-click jank to vanish — and it's **still there**. The fix that should have worked didn't, and it's not obvious why. (This is a *developer* symptom, not a user one — and it's the most instructive moment of the day.)
 - **Where:** `src/components/ProductTable.tsx` — `onToggle={() => onToggleWishlist(product.id)}`.
 - **Profiler signal:** even with `React.memo`, rows re-render. "Why did this render?" → **props changed: `onToggle`**.
 - **Root cause:** a brand-new arrow function is created for every row on every render, so memo's prop comparison always fails.
@@ -46,6 +49,7 @@ Everything below is the stuff participants **don't** get. Each fix also lives as
 - **Prove it (the payoff 🎉):** record a heart toggle → only the **one** clicked row re-renders; every other row is **grey/skipped**. This is the "measure, don't guess — and here's the proof" moment. Linger on it.
 
 ### 🟡 Issue 4 — Expensive compute in render (heavy summary)
+- **Feels like:** 🐞 *"The dashboard is slow whenever I touch anything."* The summary cards take a visible beat to settle, and — stacked on #1 — every keystroke stutters because the heavy stats recompute from scratch each time. Nothing feels instant.
 - **Where:** `src/components/SummaryPanel.tsx` — `computeStats(products)` runs every render.
 - **Profiler signal:** `<SummaryPanel>` dominates self-render time in each commit it appears in.
 - **Root cause:** the heavy roll-up is recomputed on every render with no memoization. (Combined with #1, it ran on every keystroke.)
@@ -54,6 +58,7 @@ Everything below is the stuff participants **don't** get. Each fix also lives as
 - **Stretch talking point:** fixing #1 *and* #4 are independent and compound — colocation stops it re-rendering on type; `useMemo` makes the render cheap when it *does* happen.
 
 ### 🔴 Issue 5 — Context consumed too broadly (theme flips re-render everything)
+- **Feels like:** 🐞 *"Dark-mode toggle is slow."* Switching light/dark lags noticeably — the whole catalog visibly hitches for what should be an instant colour swap. A theme flip shouldn't take half a second.
 - **Where:** `src/theme/ThemeContext.tsx` (churning value) + `src/components/ProductRow.tsx` (every row calls `useTheme()` for the heart colour).
 - **Profiler signal:** flip the theme → all ~600 rows re-render in one commit, just to change one accent colour.
 - **Root cause:** every row subscribes to the theme context, and the provider hands out a fresh value object each render. A purely visual concern (colour) is being broadcast through React's render path to hundreds of components.
