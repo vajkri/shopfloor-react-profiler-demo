@@ -3,6 +3,17 @@ marp: true
 theme: default
 paginate: true
 header: 'React Profiler · Knowledge Sharing'
+style: |
+  section.thumb header + p { margin: 0; line-height: 0; }
+  section.thumb header + p > img {
+    position: absolute;
+    top: 58px;
+    right: 44px;
+    width: 25%;
+    border-radius: 6px;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, .28);
+  }
+  section.thumb h1 { max-width: 72%; }
 ---
 
 <!-- _class: invert lead -->
@@ -40,23 +51,132 @@ It answers three questions:
 
 ---
 
-# Two tabs, two jobs
+# Three tabs, three jobs
 
-Both come from the **React DevTools** extension:
+- 📷 **Components** = a *photo* — inspect **state & data** at this instant
+- 🎥 **Profiler** = a *video + stopwatch* — measure **React renders** over time
+- 🩻 **Performance** = an *X-ray* — look beneath React; e.g. the real **INP** users feel
 
-- 📷 **Components** = a *photo* — the tree, props / state / hooks, this exact instant
-- 🎥 **Profiler** = a *video + stopwatch* — what happened over time
-
-⚠️ Not the same as Chrome's built-in **Performance** tab (that's lower-level and not React-aware).
+The first two come from **React DevTools**; **Performance** is Chrome's own.
 
 ---
 
-# Reading a recording
+<!-- _header: 'The three tabs · Components' -->
 
-1. **Commits bar** — each bar = one commit *(tall + yellow = slow)*
-2. **Flame graph** — component hierarchy; bar width = render time
-3. **Ranked chart** — same commit, slowest first
-4. **"Why did this render?"** — props / hooks / parent rendered
+![bg right:52% fit](img/components-tab.png)
+
+# 📷 Components
+### *Inspect one component, right now*
+
+- Walk the live **component tree**
+- Select a node → its **props, state & hooks**
+- See **rendered by** + **source** (file : line)
+- Search by name; hover to highlight on the page
+
+**For:** *"what's inside this component — and where does it live?"*
+
+---
+
+<!-- _header: 'The three tabs · Profiler' -->
+
+![bg right:52% fit](img/profiler-tab.png)
+
+# 🎥 Profiler
+### *Record renders over time*
+
+- Hit **record**, interact, then stop
+- Each bar = one **commit** (a batched render), timed
+- Click a component → **why it rendered** + its cost
+- Step through commits to find the slow one
+
+**For:** *"what re-rendered — and what did it cost?"*
+
+---
+
+<!-- _header: 'The three tabs · Performance' -->
+
+![bg right:52% fit](img/performance-tab.png)
+
+# 🩻 Performance
+### *Look beneath React*
+
+- Sees **call stacks, paint, layout, long tasks**
+- Reports **INP** — the latency users actually feel
+
+**For:** *"does it really feel faster?"* — compare **metrics before vs after** a fix.
+
+---
+
+<!-- _header: 'Reading a recording · 1 / 4' -->
+<!-- _class: thumb -->
+
+![](img/commits.png)
+
+# 1. Commits strip
+### *Pick which moment to inspect*
+
+The strip of bars near the top — **one bar per commit** (one DOM update). Step through them with **← →**.
+
+- **Height + color = duration** → tall / 🟡 yellow = slow
+- *(Only one commit recorded? You'll just see a single bar + `1 / 1`.)*
+
+**Use it to:** scan for the slow commit and select it — everything below now shows *that single commit*.
+
+→ *"Which update was expensive?"*
+
+---
+
+<!-- _header: 'Reading a recording · 2 / 4' -->
+<!-- _class: thumb -->
+
+![](img/flame.png)
+
+# 2. Flame graph
+### *See the slow render in context*
+
+Shows your **component tree** as nested bars in a commit.
+
+- **Width = render time** of that component **+ all its children**
+- **Colored bars** = rendered in this commit (warmer = slower)
+- **Grey bars** = were on screen but *didn't* re-render this commit
+- **Hover** → exact ms, plus *self* time vs *including-children*
+
+⚠️ **The catch:** a wide bar may be wide because of its *children*, not itself.
+
+---
+
+<!-- _header: 'Reading a recording · 3 / 4' -->
+<!-- _class: thumb -->
+
+![](img/ranked.png)
+
+# 3. Ranked chart
+### *Find the #1 thing to fix*
+
+Lists every component that rendered in a commit, **slowest-first**.
+
+- No hierarchy, no context — pure *"who took the longest"*
+- Shows each component's **own** render time
+
+**Flame vs ranked:** flame = *where it sits*; ranked = *who's slowest*. Spot the culprit in ranked → flip to flame for context.
+
+---
+
+<!-- _header: 'Reading a recording · 4 / 4' -->
+<!-- _class: thumb -->
+
+![](img/why.png)
+
+# 4. "Why did this render?"
+### *The cause, not just the cost*
+
+Click a component → the panel names **why it rendered**:
+mount · **props changed** · **hooks changed** · **parent rendered**.
+
+⚠️ Needs **"Record why each component rendered"** on *before* you record.
+
+💡 **The payoff:** *"parent rendered"* / *"props changed"* on a component
+that needed no new data = an **unnecessary re-render** → fix with `memo` / `useCallback`.
 
 ---
 
