@@ -23,6 +23,14 @@
       "name": "preview",
       "command": "npm run preview",
       "runAtStart": false
+    },
+    "slides": {
+      "name": "slides",
+      "command": "npm run slides",
+      "runAtStart": false,
+      "preview": {
+        "port": 8080
+      }
     }
   }
 }
