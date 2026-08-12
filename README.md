@@ -12,12 +12,6 @@ There are **5 performance issues** hidden in here, ordered roughly easy → hard
 
 ## Setup
 
-### Option A — CodeSandbox (no install)
-1. Open the sandbox link your facilitator shared (or import this repo: **codesandbox.io → Import → paste the GitHub URL**).
-2. Click **Fork** to get your own copy.
-3. The app runs automatically. Open the preview in its own window for profiling.
-
-### Option B — Local
 ```bash
 npm install
 npm run dev
